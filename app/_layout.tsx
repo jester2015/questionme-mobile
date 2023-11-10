@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SocketProvider } from '../providers/SocketProvider';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -47,11 +48,13 @@ const InitialLayout = () => {
 
 const RootLayoutNav = () => {
 	return (
+    <SocketProvider>
         <SafeAreaProvider>
 		<ClerkProvider publishableKey={"pk_test_aGFuZHktam9leS05Ny5jbGVyay5hY2NvdW50cy5kZXYk"} tokenCache={tokenCache}>
 			<InitialLayout />
 		</ClerkProvider>
         </SafeAreaProvider>
+        </SocketProvider>
 	);
 };
 

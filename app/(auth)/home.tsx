@@ -1,13 +1,25 @@
 import React, {FC} from 'react';
-import {StyleSheet, Text, StatusBar, View, Button, Image, TextInput, ScrollView, Pressable} from 'react-native';
+import {StyleSheet, Text, StatusBar, View, Image, TextInput, ScrollView, Pressable} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import GameTiles from '../../components/GameTiles';
+import { Button, Colors } from 'react-native-ui-lib';
 interface Header {
     title: string
 }
+export const LogoutButton = () => {
+    const { signOut } = useAuth();
+
+    const doLogout = () => {
+        signOut();
+    }
+    return (
+        <Button onPress={doLogout} label='Logout'></Button>
+    )
+}
+
 const HomeClass: FC = props => {
     const {user} = useUser();
     return (
@@ -59,6 +71,7 @@ const HomeClass: FC = props => {
 
 
                 <StatusBar backgroundColor='green' />
+                <LogoutButton />
             </View>
             </SafeAreaView>
     )
