@@ -1,56 +1,58 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import { Slot, useRouter, useSegments } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+// Cache the Clerk JWT
+const tokenCache = {
+	async getToken(key: string) {
+		try {
+			return SecureStore.getItemAsync(key);
+		} catch (err) {
+			return null;
+		}
+	},
+	async saveToken(key: string, value: string) {
+		try {
+			return SecureStore.setItemAsync(key, value);
+		} catch (err) {
+			return;
+		}
+	}
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+const InitialLayout = () => {
+	const { isLoaded, isSignedIn } = useAuth();
+	const segments = useSegments();
+	const router = useRouter();
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
+	// If the user is signed in, redirect them to the home page
+	// If the user is not signed in, redirect them to the login page
+	useEffect(() => {
+		if (!isLoaded) return;
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+		
+		if (isSignedIn) {
+			router.replace('/(auth)/home');
+		} else if (!isSignedIn) {
+			router.replace('/(public)/login');
+		}
+	}, [isSignedIn]);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+	return <Slot />;
+};
 
-  if (!loaded) {
-    return null;
-  }
+const RootLayoutNav = () => {
+	return (
+        <SafeAreaProvider>
+		<ClerkProvider publishableKey={"pk_test_aGFuZHktam9leS05Ny5jbGVyay5hY2NvdW50cy5kZXYk"} tokenCache={tokenCache}>
+			<InitialLayout />
+		</ClerkProvider>
+        </SafeAreaProvider>
+	);
+};
 
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
-  );
-}
+export default RootLayoutNav;
